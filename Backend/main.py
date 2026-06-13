@@ -1,6 +1,20 @@
-def main():
-    print("Hello from backend!")
+import uvicorn
+from app.database import Base, engine
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.Routers.user_router import router as user_router
 
+
+Base.metadata.create_all(bind=engine)
+app = FastAPI()
+app.include_router(user_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
