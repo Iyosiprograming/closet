@@ -3,11 +3,13 @@ from app.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.Routers.user_router import router as user_router
+from app.Routers.clothe_router import router as clothe_router
 
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.include_router(user_router)
+app.include_router(clothe_router)
 
 app.add_middleware(
     CORSMiddleware,
