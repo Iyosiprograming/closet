@@ -1,5 +1,6 @@
 from ..Models.clothe_model import Clothe
 from sqlalchemy.orm import Session
+from typing import List
 from ..Schemas.clothe_schema import ClotheCreateSchema, ClotheCreateResponseSchema
 
 class ClotheService:
@@ -24,3 +25,6 @@ class ClotheService:
         self.db.refresh(new_clothe)
         
         return ClotheCreateResponseSchema(message="Clothe added successfully")
+    
+    def get_all_clothe(self, user_id: int) -> List[Clothe]:
+        return self.db.query(Clothe).filter(Clothe.user_id == user_id).all()
