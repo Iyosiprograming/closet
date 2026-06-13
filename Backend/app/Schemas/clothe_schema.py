@@ -10,5 +10,6 @@ class ClotheCreateSchema(BaseModel):
     condition_tier: Optional[int] = None
     description: str
 
-class ClotheCreateResponseSchema(BaseModel):
+class MessageResponseSchema(BaseModel):
     message: str
+
