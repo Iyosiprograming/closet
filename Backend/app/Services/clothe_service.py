@@ -8,6 +8,7 @@ class ClotheService:
     def __init__(self, db: Session):
         self.db = db
 
+# this function addes clothe to the system for user
     def add_new_clothe(self, clothe_data: ClotheCreateSchema) -> MessageResponseSchema:
         description_str = f"{clothe_data.name or ''} {clothe_data.color} {clothe_data.category} {clothe_data.condition_tier or ''}".strip()
         
@@ -27,9 +28,11 @@ class ClotheService:
         
         return MessageResponseSchema(message="Clothe added successfully")
     
+    # this fucntion get all the existing clothe for user
     def get_all_clothe(self, user_id: int) -> List[Clothe]:
         return self.db.query(Clothe).filter(Clothe.user_id == user_id).all()
     
+    # this function removes users clothe
     def delete_clothe(self, user_id: int, clothe_id: int) -> MessageResponseSchema:
 
         existing_user = self.db.query(User).filter(User.tg_id == user_id).first()
@@ -41,6 +44,23 @@ class ClotheService:
         self.db.commit()
         return MessageResponseSchema(message="Clothe deleted successfully")
 
-    # update and delete clothes
+    
+# this function is the logic to update the existing clothes
+    def update_clothe(self, clothe_data: ClotheCreateSchema, user_id: int, clothe_id: int) -> MessageResponseSchema:
+        existing_user = self.db.query(User).filter(User.tg_id == user_id).first()
+        if not existing_user:
+            return MessageResponseSchema(message="User not found")
+        
+        existing_clothe = self.db.query(Clothe).filter(Clothe.id == clothe_id, Clothe.user_id == user_id).first()
+        if not existing_clothe:
+            return MessageResponseSchema(message="Clothing item not found")
+        
+        for key, value in clothe_data.model_dump(exclude_unset=True).items():
+            setattr(existing_clothe, key, value)
+        
+        self.db.commit()
+        self.db.refresh(existing_clothe)
+        
+        return MessageResponseSchema(message="Clothing item updated successfully")
 
-    # get suggestions
+        # get suggestions

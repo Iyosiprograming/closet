@@ -20,3 +20,8 @@ def get_all_clothe_endpoint(user_id: int, db: Session = Depends(get_db)):
 def delete_clothe_endpoint(user_id: int, clothe_id: int, db: Session = Depends(get_db)):
     clothe_service = ClotheService(db)
     return clothe_service.delete_clothe(user_id,clothe_id)
+
+@router.put("/", response_model=MessageResponseSchema)
+def update_clothe_endpoint(clothe_data: ClotheCreateSchema, user_id: int, clothe_id: int, db: Session = Depends(get_db)):
+    clothe_service = ClotheService(db)
+    return clothe_service.update_clothe(clothe_data, user_id, clothe_id)
