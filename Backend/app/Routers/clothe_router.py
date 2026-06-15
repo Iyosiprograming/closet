@@ -25,3 +25,15 @@ def delete_clothe_endpoint(user_id: int, clothe_id: int, db: Session = Depends(g
 def update_clothe_endpoint(clothe_data: ClotheCreateSchema, user_id: int, clothe_id: int, db: Session = Depends(get_db)):
     clothe_service = ClotheService(db)
     return clothe_service.update_clothe(clothe_data, user_id, clothe_id)
+
+@router.post('/get')
+def get_single_clothe_endpoint(clothe_id: int, user_id: int, db: Session = Depends(get_db)):
+    clothe_service = ClotheService(db)
+    return clothe_service.get_signle_clothe(clothe_id, user_id)
+
+@router.post("/suggest")
+async def suggest_clothe_endpoint(prompt: str, user_id: int, db: Session = Depends(get_db)):
+        clothe_service = ClotheService(db)
+        response = await  clothe_service.suggest_clothe(prompt, user_id) 
+        return response
+

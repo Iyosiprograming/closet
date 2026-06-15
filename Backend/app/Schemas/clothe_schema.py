@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class ClotheCreateSchema(BaseModel):
     user_id: int
@@ -12,4 +12,3 @@ class ClotheCreateSchema(BaseModel):
 
 class MessageResponseSchema(BaseModel):
     message: str
-

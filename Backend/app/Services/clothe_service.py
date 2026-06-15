@@ -3,6 +3,7 @@ from ..Models.user_model import User
 from sqlalchemy.orm import Session
 from typing import List
 from ..Schemas.clothe_schema import ClotheCreateSchema, MessageResponseSchema
+from ..helper.logic import generate_response
 
 class ClotheService:
     def __init__(self, db: Session):
@@ -27,6 +28,19 @@ class ClotheService:
         self.db.refresh(new_clothe)
         
         return MessageResponseSchema(message="Clothe added successfully")
+    
+    # get single clothe
+    def get_single_clothe(self, clothe_id, user_id):
+        existing_user = self.db.query(User).filter(User.tg_id == user_id).first()
+        if not existing_user:
+            return MessageResponseSchema(message="User Not Found")
+        
+        existing_clothe = self.db.query(Clothe).filter(Clothe.id == clothe_id).first()
+
+        if not existing_clothe:
+            return MessageResponseSchema(message="Clothe Not Found")
+        
+        return existing_clothe
     
     # this fucntion get all the existing clothe for user
     def get_all_clothe(self, user_id: int) -> List[Clothe]:
@@ -64,3 +78,49 @@ class ClotheService:
         return MessageResponseSchema(message="Clothing item updated successfully")
 
         # get suggestions
+
+    async def suggest_clothe(self, prompt: str, user_id: int):
+        existing_user = (
+            self.db.query(User)
+            .filter(User.tg_id == user_id)
+            .first()
+        )
+
+        if not existing_user:
+            return MessageResponseSchema(
+                message="User not found"
+            )
+
+        all_clothes = self.get_all_clothe(user_id)
+
+        if not all_clothes:
+            return MessageResponseSchema(
+                message="No clothes found"
+            )
+
+        clothe_descriptions = [
+            f"ID {item.id}: {item.description}"
+            for item in all_clothes
+        ]
+
+        suggestion = await generate_response(
+        clothe_descriptions,
+        prompt
+    )
+
+        clothe_ids = suggestion.get("clothe_ids", [])
+        if not clothe_ids:
+            return MessageResponseSchema(
+                message="Could not generate a recommendation"
+            )
+
+        selected_clothes = (
+            self.db.query(Clothe)
+            .filter(Clothe.id.in_(clothe_ids), Clothe.user_id == user_id)
+            .all()
+        )
+
+        return {
+            "outfit": selected_clothes,
+        }
+         
