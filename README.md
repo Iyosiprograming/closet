@@ -1,4 +1,4 @@
-# Closet
+# Closet AI Wardrobe Backend
 
 Closet is a Telegram based wardrobe management application built with FastAPI.
 
