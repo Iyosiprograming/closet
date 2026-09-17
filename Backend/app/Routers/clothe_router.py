@@ -20,7 +20,6 @@ router = APIRouter(
     tags=["clothes"],
 )
 
-
 @router.post(
     "/",
     response_model=ClotheResponseSchema,
@@ -60,6 +59,24 @@ def get_all_clothes_endpoint(
 
     return clothe_service.get_all_clothes(
         user_id=user_id,
+    )
+
+
+# IMPORTANT: put this BEFORE /{clothe_id}
+@router.get(
+    "/ai-suggestion",
+    response_model=list[ClotheResponseSchema],
+)
+async def get_ai_suggestion(
+    occasion: str,
+    user_id: int = Depends(verify_access_token),
+    db: Session = Depends(get_db),
+):
+    service = ClotheService(db)
+
+    return await service.get_ai_suggestion(
+        user_id=user_id,
+        occasion=occasion,
     )
 
 

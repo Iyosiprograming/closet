@@ -85,6 +85,27 @@ def refresh_access_token_endpoint(
         "message": "Token refreshed",
     }
 
+@router.post("/logout")
+def logout_endpoint(
+    response: Response,
+):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=False,  # True in production with HTTPS
+        samesite="lax",
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=False,  # True in production with HTTPS
+        samesite="lax",
+    )
+
+    return {
+        "message": "Logout successful",
+    }
 
 @router.patch("/api-keys")
 def set_api_key_endpoint(

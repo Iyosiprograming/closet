@@ -18,6 +18,9 @@ from app.Schemas.clothe_schema import (
     MessageResponseSchema,
 )
 
+from app.Helper.gemin_api import generate_response
+from app.Helper.weather_api import get_weather
+
 
 IMAGE_DIR = Path("images")
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -357,6 +360,127 @@ class ClotheService:
         except SQLAlchemyError:
             logger.exception(
                 "Database error while getting clothes: user_id=%s",
+                user_id,
+            )
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error",
+            )
+
+    async def get_ai_suggestion(
+        self,
+        user_id: int,
+        occasion: str,
+    ):
+        try:
+            # 1. Get user
+            user = (
+                self.db.query(User)
+                .filter(User.id == user_id)
+                .first()
+            )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found",
+                )
+
+            if not user.gemini_api_key:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Gemini API key not found",
+                )
+
+            # 2. Get weather
+            weather = get_weather(
+                user.location,
+                user.openweather_api_key,
+            )
+
+            # 3. Get user's clothes
+            clothes = (
+                self.db.query(Clothe)
+                .filter(Clothe.user_id == user_id)
+                .all()
+            )
+
+            if not clothes:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No clothes found in wardrobe",
+                )
+
+            # 4. Format clothes for Gemini
+            formatted_clothes = [
+                f"ID: {clothe.id}, "
+                f"Item: {clothe.name}, "
+                f"Color: {clothe.color}, "
+                f"Type: {clothe.clothe_type.value}, "
+                f"Season: {clothe.season.value}, "
+                f"Formality: {clothe.formality.value}"
+                for clothe in clothes
+            ]
+
+            # 5. Create Gemini prompt
+            prompt = (
+                f"Current weather: {weather}. "
+                f"Occasion: {occasion}. "
+                "Choose an appropriate outfit from my wardrobe. "
+                "If weather information is unavailable, rely on the "
+                "occasion, season, and formality of the clothing items."
+            )
+
+            # 6. Ask Gemini
+            recommendation = await generate_response(
+                user.gemini_api_key,
+                formatted_clothes,
+                prompt,
+            )
+
+            # 7. Handle Gemini failure
+            if recommendation is None:
+                logger.warning(
+                    "AI outfit recommendation unavailable: user_id=%s",
+                    user_id,
+                )
+
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="AI outfit recommendation is temporarily unavailable",
+                )
+
+            # 8. Extract selected IDs
+            suggested_clothe_ids = recommendation.clothe_ids
+
+            if not suggested_clothe_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="AI could not generate an outfit recommendation",
+                )
+
+            # 9. Get selected clothes from database
+            suggested_clothes = (
+                self.db.query(Clothe)
+                .filter(
+                    Clothe.user_id == user_id,
+                    Clothe.id.in_(suggested_clothe_ids),
+                )
+                .all()
+            )
+
+            # 10. Return clothes
+            return suggested_clothes
+
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError:
+            self.db.rollback()
+
+            logger.exception(
+                "Database error while generating AI suggestion: user_id=%s",
                 user_id,
             )
 
