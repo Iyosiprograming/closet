@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from ..database import get_db
+from ..Core.database import get_db
 from ..Services.clothe_service import ClotheService
 from ..Schemas.clothe_schema import ClotheCreateSchema, MessageResponseSchema
 

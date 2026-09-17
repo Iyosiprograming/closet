@@ -1,9 +1,22 @@
 from pydantic import BaseModel
-from typing import Optional
+
 
 class UserCreateSchema(BaseModel):
-    tg_id: int
-    tg_username: Optional[str] = None
+    username: str
+    password: str
 
+
+class LoginUserSchema(UserCreateSchema):
+    pass
 class UserCreateResponseSchema(BaseModel):
-    message: str
+    id: int
+    username: str
+
+
+class AddApiKey(BaseModel):
+    gemini_api_key: str
+    openweather_api_key: str
+
+
+class AddLocation(BaseModel):
+    location: str | None = None
