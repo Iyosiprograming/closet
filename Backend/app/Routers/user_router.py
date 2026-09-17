@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Cookie, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.Core.database import get_db
@@ -16,10 +16,7 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/",
-    response_model=UserCreateResponseSchema,
-)
+@router.post("/", response_model=UserCreateResponseSchema)
 def create_user_endpoint(
     user_data: UserCreateSchema,
     db: Session = Depends(get_db),
@@ -37,14 +34,50 @@ def login_user_endpoint(
 ):
     user_service = UserService(db)
 
-    token = user_service.login_user(user_data)
+    access_token, refresh_token = user_service.login_user(user_data)
 
     response.set_cookie(
         key="access_token",
-        value=token,
+        value=access_token,
         httponly=True,
-        secure=True,
+        secure=False,  # True in production with HTTPS
         samesite="lax",
+        max_age=15 * 60,
     )
 
-    return {"message": "Login successful"}
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,  # True in production with HTTPS
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60,
+    )
+
+    return {
+        "message": "Login successful",
+    }
+
+
+@router.post("/refresh")
+def refresh_access_token_endpoint(
+    response: Response,
+    refresh_token: str = Cookie(...),
+    db: Session = Depends(get_db),
+):
+    user_service = UserService(db)
+
+    new_access_token = user_service.refresh_access_token(refresh_token)
+
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        secure=False,  # True in production with HTTPS
+        samesite="lax",
+        max_age=15 * 60,
+    )
+
+    return {
+        "message": "Token refreshed",
+    }

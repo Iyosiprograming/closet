@@ -1,39 +1,119 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
-from ..Core.database import get_db
-from ..Services.clothe_service import ClotheService
-from ..Schemas.clothe_schema import ClotheCreateSchema, MessageResponseSchema
 
-router = APIRouter(prefix="/clothes", tags=["clothes"])
+from app.Auth.jwt import verify_access_token
+from app.Core.database import get_db
+from app.Models.clothe_model import FormalityType, SeasonType
+from app.Schemas.clothe_schema import (
+    ClotheResponseSchema,
+    MessageResponseSchema,
+)
+from app.Services.clothe_service import ClotheService
 
-@router.post("/", response_model=MessageResponseSchema)
-def add_new_clothe_endpoint(clothe_data: ClotheCreateSchema, db: Session = Depends(get_db)):
+
+router = APIRouter(
+    prefix="/clothes",
+    tags=["clothes"],
+)
+
+
+@router.post(
+    "/",
+    response_model=ClotheResponseSchema,
+)
+def add_new_clothe_endpoint(
+    image: UploadFile = File(...),
+    name: str = Form(...),
+    color: str = Form(...),
+    season: SeasonType = Form(...),
+    formality: FormalityType = Form(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_access_token),
+):
     clothe_service = ClotheService(db)
-    return clothe_service.add_new_clothe(clothe_data)
 
-@router.post("/all", response_model=list[ClotheCreateSchema])
-def get_all_clothe_endpoint(user_id: int, db: Session = Depends(get_db)):
+    return clothe_service.add_new_clothe(
+        image=image,
+        name=name,
+        color=color,
+        season=season,
+        formality=formality,
+        user_id=user_id,
+    )
+
+
+@router.get(
+    "/",
+    response_model=list[ClotheResponseSchema],
+)
+def get_all_clothes_endpoint(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_access_token),
+):
     clothe_service = ClotheService(db)
-    return clothe_service.get_all_clothe(user_id)
 
-@router.delete("/", response_model=MessageResponseSchema)
-def delete_clothe_endpoint(user_id: int, clothe_id: int, db: Session = Depends(get_db)):
+    return clothe_service.get_all_clothes(
+        user_id=user_id,
+    )
+
+
+@router.get(
+    "/{clothe_id}",
+    response_model=ClotheResponseSchema,
+)
+def get_single_clothe_endpoint(
+    clothe_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_access_token),
+):
     clothe_service = ClotheService(db)
-    return clothe_service.delete_clothe(user_id,clothe_id)
 
-@router.put("/", response_model=MessageResponseSchema)
-def update_clothe_endpoint(clothe_data: ClotheCreateSchema, user_id: int, clothe_id: int, db: Session = Depends(get_db)):
+    return clothe_service.get_clothe(
+        clothe_id=clothe_id,
+        user_id=user_id,
+    )
+
+
+@router.patch(
+    "/{clothe_id}",
+    response_model=ClotheResponseSchema,
+)
+def update_clothe_endpoint(
+    clothe_id: int,
+    image: UploadFile | None = File(None),
+    name: str | None = Form(None),
+    color: str | None = Form(None),
+    season: SeasonType | None = Form(None),
+    formality: FormalityType | None = Form(None),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_access_token),
+):
     clothe_service = ClotheService(db)
-    return clothe_service.update_clothe(clothe_data, user_id, clothe_id)
 
-@router.post('/get')
-def get_single_clothe_endpoint(clothe_id: int, user_id: int, db: Session = Depends(get_db)):
+    return clothe_service.update_clothe(
+        clothe_id=clothe_id,
+        user_id=user_id,
+        image=image,
+        name=name,
+        color=color,
+        season=season,
+        formality=formality,
+    )
+
+
+@router.delete(
+    "/{clothe_id}",
+    response_model=MessageResponseSchema,
+)
+def delete_clothe_endpoint(
+    clothe_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_access_token),
+):
     clothe_service = ClotheService(db)
-    return clothe_service.get_signle_clothe(clothe_id, user_id)
 
-@router.post("/suggest")
-async def suggest_clothe_endpoint(prompt: str, user_id: int, db: Session = Depends(get_db)):
-        clothe_service = ClotheService(db)
-        response = await  clothe_service.suggest_clothe(prompt, user_id) 
-        return response
+    return clothe_service.delete_clothe(
+        clothe_id=clothe_id,
+        user_id=user_id,
+    )
 

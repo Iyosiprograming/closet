@@ -1,23 +1,65 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from ..Core.database import Base
+from enum import Enum
+
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.Core.database import Base
+
+
+class FormalityType(str, Enum):
+    CASUAL = "casual"
+    FORMAL = "formal"
+    HOMEWEAR = "homewear"
+
+
+class SeasonType(str, Enum):
+    SUNNY = "sunny"
+    RAINY = "rainy"
+    ALL = "all"
+
 
 class Clothe(Base):
     __tablename__ = "clothes"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.tg_id"), nullable=False)
-    
-    image_url = Column(String(500), nullable=False)
-    name = Column(String(100), nullable=True)
-    color = Column(String(50), nullable=False)
-    category = Column(String(50), nullable=False) 
-    
-    # Tracks item status (e.g., 1=Casual, 2=Formal/Party, 3=New)
-    condition_tier = Column(Integer, nullable=True) 
-    description = Column(String(500), nullable=False)
-    
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
 
-    user = relationship("User", back_populates="clothes")
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    color: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    season: Mapped[SeasonType] = mapped_column(
+        SQLEnum(SeasonType),
+        nullable=False,
+    )
+
+    formality: Mapped[FormalityType] = mapped_column(
+        SQLEnum(FormalityType),
+        nullable=False,
+    )
+
+    image_url: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )

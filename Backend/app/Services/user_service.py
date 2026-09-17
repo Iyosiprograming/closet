@@ -2,14 +2,18 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.Auth.jwt import (
+    create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+)
 from app.Auth.password import hash_password, verify_password
-from app.Auth.jwt import create_access_token
 from app.Core.logger import logger
 from app.Models.user_model import User
 from app.Schemas.user_schema import (
+    LoginUserSchema,
     UserCreateResponseSchema,
     UserCreateSchema,
-    LoginUserSchema
 )
 
 
@@ -25,8 +29,10 @@ class UserService:
                 .first()
                 is not None
             )
+
         except SQLAlchemyError:
             logger.exception("Database error while checking username")
+
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error",
@@ -42,6 +48,7 @@ class UserService:
                     "User registration attempted with existing username: %s",
                     user_data.username,
                 )
+
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="User already exists",
@@ -91,7 +98,11 @@ class UserService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error",
             )
-    def login_user(self, user_data: LoginUserSchema):
+
+    def login_user(
+        self,
+        user_data: LoginUserSchema,
+    ) -> tuple[str, str]:
         try:
             user = (
                 self.db.query(User)
@@ -108,18 +119,63 @@ class UserService:
                     detail="Invalid username or password",
                 )
 
-            token = create_access_token(user.id)
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
 
-            logger.info("User logged in successfully: %s", user.username)
+            logger.info(
+                "User logged in successfully: %s",
+                user.username,
+            )
 
-            return token
+            return access_token, refresh_token
+
+        except HTTPException:
+            raise
 
         except SQLAlchemyError:
             self.db.rollback()
 
-            logger.exception("Database error while logging in user")
+            logger.exception(
+                "Database error while logging in user"
+            )
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error",
             )
+
+    def refresh_access_token(
+        self,
+        refresh_token: str,
+    ) -> str:
+        try:
+            user_id = verify_refresh_token(refresh_token)
+
+            user_exists = (
+                self.db.query(User.id)
+                .filter(User.id == user_id)
+                .first()
+                is not None
+            )
+
+            if not user_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found",
+                )
+
+            return create_access_token(user_id)
+
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError:
+            logger.exception(
+                "Database error while refreshing access token"
+            )
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error",
+            )
+
