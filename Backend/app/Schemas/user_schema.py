@@ -15,7 +15,7 @@ class UserCreateResponseSchema(BaseModel):
 
 class AddApiKey(BaseModel):
     gemini_api_key: str
-    openweather_api_key: str
+    openweather_api_key: str | None = None
 
 
 class AddLocation(BaseModel):

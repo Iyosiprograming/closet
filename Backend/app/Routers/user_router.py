@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Cookie, Depends, Response
+from fastapi import APIRouter, Body, Cookie, Depends, Response
 from sqlalchemy.orm import Session
 
+from app.Auth.jwt import verify_access_token
 from app.Core.database import get_db
 from app.Schemas.user_schema import (
+    AddApiKey,
     LoginUserSchema,
     UserCreateResponseSchema,
     UserCreateSchema,
+    AddLocation
 )
 from app.Services.user_service import UserService
 
@@ -81,3 +84,30 @@ def refresh_access_token_endpoint(
     return {
         "message": "Token refreshed",
     }
+
+
+@router.patch("/api-keys")
+def set_api_key_endpoint(
+    api_key: AddApiKey,
+    user_id: int = Depends(verify_access_token),
+    db: Session = Depends(get_db),
+):
+    user_service = UserService(db)
+
+    return user_service.set_api_key(
+        user_id=user_id,
+        api_key=api_key,
+    )
+
+@router.patch("/location")
+def add_location_endpoint(
+    location: AddLocation,
+    user_id: int = Depends(verify_access_token),
+    db: Session = Depends(get_db),
+):
+    user_service = UserService(db)
+
+    return user_service.add_location(
+        user_id=user_id,
+        location=location,
+    )

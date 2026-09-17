@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 
 from app.Auth.jwt import verify_access_token
 from app.Core.database import get_db
-from app.Models.clothe_model import FormalityType, SeasonType
+from app.Models.clothe_model import (
+    ClotheType,
+    FormalityType,
+    SeasonType,
+)
 from app.Schemas.clothe_schema import (
     ClotheResponseSchema,
     MessageResponseSchema,
@@ -25,6 +29,7 @@ def add_new_clothe_endpoint(
     image: UploadFile = File(...),
     name: str = Form(...),
     color: str = Form(...),
+    clothe_type: ClotheType = Form(...),
     season: SeasonType = Form(...),
     formality: FormalityType = Form(...),
     db: Session = Depends(get_db),
@@ -36,6 +41,7 @@ def add_new_clothe_endpoint(
         image=image,
         name=name,
         color=color,
+        clothe_type=clothe_type,
         season=season,
         formality=formality,
         user_id=user_id,
@@ -83,6 +89,7 @@ def update_clothe_endpoint(
     image: UploadFile | None = File(None),
     name: str | None = Form(None),
     color: str | None = Form(None),
+    clothe_type: ClotheType | None = Form(None),
     season: SeasonType | None = Form(None),
     formality: FormalityType | None = Form(None),
     db: Session = Depends(get_db),
@@ -96,6 +103,7 @@ def update_clothe_endpoint(
         image=image,
         name=name,
         color=color,
+        clothe_type=clothe_type,
         season=season,
         formality=formality,
     )
@@ -116,4 +124,3 @@ def delete_clothe_endpoint(
         clothe_id=clothe_id,
         user_id=user_id,
     )
-

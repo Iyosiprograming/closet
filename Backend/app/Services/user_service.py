@@ -14,6 +14,8 @@ from app.Schemas.user_schema import (
     LoginUserSchema,
     UserCreateResponseSchema,
     UserCreateSchema,
+    AddApiKey,
+    AddLocation
 )
 
 
@@ -179,3 +181,103 @@ class UserService:
                 detail="Database error",
             )
 
+    def set_api_key(
+        self,
+        user_id: int,
+        api_key: AddApiKey,
+    ):
+        try:
+            user = (
+                self.db.query(User)
+                .filter(User.id == user_id)
+                .first()
+            )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found",
+                )
+
+            # Required
+            user.gemini_api_key = api_key.gemini_api_key
+
+            # Optional
+            if api_key.openweather_api_key is not None:
+                user.openweather_api_key = api_key.openweather_api_key
+
+            self.db.commit()
+            self.db.refresh(user)
+
+            logger.info(
+                "API keys updated for user %s",
+                user_id,
+            )
+
+            return {
+                "message": "API keys updated successfully"
+            }
+
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError:
+            self.db.rollback()
+
+            logger.exception(
+                "Database error while setting API keys for user %s",
+                user_id,
+            )
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error",
+            )
+
+    def add_location(
+        self,
+        user_id: int,
+        location: AddLocation,
+    ):
+        try:
+            user = (
+                self.db.query(User)
+                .filter(User.id == user_id)
+                .first()
+            )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found",
+                )
+
+            user.location = location.location
+
+            self.db.commit()
+            self.db.refresh(user)
+
+            logger.info(
+                "Location updated for user %s",
+                user_id,
+            )
+
+            return {
+                "message": "Location updated successfully",
+            }
+
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError:
+            self.db.rollback()
+
+            logger.exception(
+                "Database error while updating location for user %s",
+                user_id,
+            )
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error",
+            )

@@ -19,6 +19,17 @@ class SeasonType(str, Enum):
     ALL = "all"
 
 
+class ClotheType(str, Enum):
+    TOP = "top"
+    BOTTOM = "bottom"
+    SHOES = "shoes"
+    UNDERWEAR = "underwear"
+    HAT = "hat"
+    OUTERWEAR = "outerwear"
+    ACCESSORY = "accessory"
+    OTHER = "other"
+
+
 class Clothe(Base):
     __tablename__ = "clothes"
 
@@ -40,6 +51,11 @@ class Clothe(Base):
 
     color: Mapped[str] = mapped_column(
         String(50),
+        nullable=False,
+    )
+
+    clothe_type: Mapped[ClotheType] = mapped_column(
+        SQLEnum(ClotheType),
         nullable=False,
     )
 

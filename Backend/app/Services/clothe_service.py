@@ -6,13 +6,17 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.Core.logger import logger
-from app.Models.clothe_model import Clothe
+from app.Models.clothe_model import (
+    Clothe,
+    ClotheType,
+    FormalityType,
+    SeasonType,
+)
 from app.Models.user_model import User
 from app.Schemas.clothe_schema import (
     ClotheResponseSchema,
     MessageResponseSchema,
 )
-from app.Models.clothe_model import FormalityType, SeasonType
 
 
 IMAGE_DIR = Path("images")
@@ -25,7 +29,10 @@ class ClotheService:
 
     def _save_image(self, image: UploadFile) -> str:
         try:
-            if not image.content_type or not image.content_type.startswith("image/"):
+            if (
+                not image.content_type
+                or not image.content_type.startswith("image/")
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="File must be an image",
@@ -96,6 +103,7 @@ class ClotheService:
         image: UploadFile,
         name: str,
         color: str,
+        clothe_type: ClotheType,
         season: SeasonType,
         formality: FormalityType,
         user_id: int,
@@ -116,6 +124,7 @@ class ClotheService:
                 image_url=image_url,
                 name=name,
                 color=color,
+                clothe_type=clothe_type,
                 season=season,
                 formality=formality,
             )
@@ -158,6 +167,7 @@ class ClotheService:
         image: UploadFile | None = None,
         name: str | None = None,
         color: str | None = None,
+        clothe_type: ClotheType | None = None,
         season: SeasonType | None = None,
         formality: FormalityType | None = None,
     ) -> ClotheResponseSchema:
@@ -191,6 +201,9 @@ class ClotheService:
             if color is not None:
                 clothe.color = color
 
+            if clothe_type is not None:
+                clothe.clothe_type = clothe_type
+
             if season is not None:
                 clothe.season = season
 
@@ -200,7 +213,6 @@ class ClotheService:
             self.db.commit()
             self.db.refresh(clothe)
 
-            # Delete old image only after successful DB commit.
             if old_image_url:
                 self._delete_image(old_image_url)
 
@@ -352,4 +364,3 @@ class ClotheService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error",
             )
-
