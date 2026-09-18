@@ -361,9 +361,10 @@ into a complete application: a React frontend, and a desktop build that a
 non-technical person can download and use without installing anything.
 
 ## Screenshots
+<img width="959" height="539" alt="Screenshot 2026-09-18 153908" src="https://github.com/user-attachments/assets/f7ad7f09-72b1-4fc4-bdb5-b0b5dac6eed8" />
+<img width="959" height="539" alt="Screenshot 2026-09-18 153900" src="https://github.com/user-attachments/assets/5189c1c5-75b2-4f10-b1ba-36a6ddb380bd" />
+<img width="947" height="539" alt="Screenshot 2026-09-18 153849" src="https://github.com/user-attachments/assets/883a0293-c5a3-4fea-895c-55b2283ea15a" />
+<img width="959" height="539" alt="Screenshot 2026-09-18 153918" src="https://github.com/user-attachments/assets/3a78458c-b4eb-4603-8dfd-061220f72071" />
 
-<img width="1920" height="1080" alt="Screenshot (3)" src="https://github.com/user-attachments/assets/081f77a6-bd00-4a8e-acfd-542755183ce2" />
-<img width="1920" height="1080" alt="Screenshot (4)" src="https://github.com/user-attachments/assets/323a961e-1298-4980-a8a7-9b82cc467656" />
-<img width="1920" height="1080" alt="Screenshot (5)" src="https://github.com/user-attachments/assets/8f970a28-3bbf-4352-8404-e9f92d04eb35" />
 
 <!-- TODO(media): replace these three with current screenshots of the dashboard, the closet grid and the outfit suggestion card (docs/media/dashboard.png, closet.png, suggestion.png). -->
