@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { showToast } from "../components/Toast";
-import { ApiError, saveApiKeys, saveLocation } from "../services/api";
+import {
+  ApiError,
+  getAppStatus,
+  quitApp,
+  saveApiKeys,
+  saveLocation,
+} from "../services/api";
+import type { AppStatus } from "../types/api";
 
 interface SettingsProps {
   onLogout: () => void;
@@ -24,6 +31,42 @@ export default function Settings({ onLogout }: SettingsProps) {
   const [openWeatherKey, setOpenWeatherKey] = useState("");
   const [keysError, setKeysError] = useState<string | null>(null);
   const [savingKeys, setSavingKeys] = useState(false);
+
+  const [appStatus, setAppStatus] = useState<AppStatus | null>(null);
+  const [quitting, setQuitting] = useState(false);
+
+  // The Quit button only makes sense when the desktop launcher owns this
+  // process, since it is the only thing that can stop the backend. In a plain
+  // browser session there is nothing of ours to shut down.
+  useEffect(() => {
+    let cancelled = false;
+
+    void getAppStatus()
+      .then((status) => {
+        if (!cancelled) setAppStatus(status);
+      })
+      .catch(() => {
+        // Not fatal — the Application section simply stays hidden.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleQuit() {
+    if (quitting) return;
+
+    setQuitting(true);
+
+    try {
+      await quitApp();
+      showToast("Closet AI is closing...");
+    } catch {
+      setQuitting(false);
+      showToast("We couldn't close Closet AI.", "error");
+    }
+  }
 
   async function handleSaveLocation(event: React.FormEvent) {
     event.preventDefault();
@@ -240,6 +283,31 @@ export default function Settings({ onLogout }: SettingsProps) {
           Log out
         </button>
       </section>
+
+      {appStatus?.desktop && (
+        <section className={`mt-6 ${sectionClass}`}>
+          <h2 className="text-lg font-semibold text-ink">Application</h2>
+
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Closet AI runs in the background while you use it. Quit when you are
+            finished — your wardrobe, images and settings stay on this computer
+            for next time.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleQuit}
+            disabled={quitting}
+            className="mt-5 rounded-full border border-line bg-soft px-5 py-2.5 text-sm text-ink transition-colors hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {quitting ? "Closing..." : "Quit Closet AI"}
+          </button>
+
+          <p className="mt-3 text-xs text-muted">
+            Closet AI {appStatus.version}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

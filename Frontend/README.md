@@ -12,6 +12,9 @@ Login  →  Dashboard  →  see clothes  →  choose an occasion  →  AI outfit
 - Node.js 20+
 - The FastAPI backend running locally on `http://127.0.0.1:8000`
 
+> End users do not need any of this. They get a single `ClosetAI.exe` that
+> already contains the built frontend and the backend — see `packaging/README.md`.
+
 ## Getting started
 
 ```bash
@@ -70,28 +73,32 @@ parameter **is the access token** — the backend declares it as
 `Depends(verify_access_token)`, where `verify_access_token(token: str)`, so
 FastAPI turns it into a required query parameter.
 
-Putting an access token in a URL is not something a browser app should do,
-and here it cannot: the token lives in an HTTP-only cookie, so no frontend code
-can read it to put it anywhere.
+Putting an access token in a URL is not something a browser app should do, and
+here it cannot: the token lives in an HTTP-only cookie, so no frontend code can
+read it to put it anywhere.
 
-`vite.config.ts` therefore contains a small **compatibility proxy** that runs on
-the dev server. It:
+The backend solves this itself. `AccessTokenQueryMiddleware` in `main.py` reads
+`access_token` from the request's `Cookie` header and mirrors it into `?token=`
+whenever the parameter is missing, so the cookie stays the single source of
+truth. Nothing in `src/` ever touches a token.
 
-- forwards `/users`, `/clothes` and `/images` to the FastAPI server on the same
-  origin (so the `SameSite=Lax` cookies are sent at all), and
-- reads `access_token` out of the request's `Cookie` header and appends it as the
-  `token` query parameter the backend insists on.
+In development the Vite dev server also proxies `/users`, `/clothes` and
+`/images` to the API (`vite.config.ts`) so the app and the API share one origin,
+because the `SameSite=Lax` cookies are only sent on same-site requests. The same
+rewrite is repeated there, so the dev setup keeps working against a backend that
+does not have the middleware.
 
-The token never reaches frontend JavaScript, and the URL the browser sees has no
-`token` in it.
+Pointing `VITE_API_BASE_URL` at a different origin will not work while the
+backend uses `SameSite=Lax` cookies with `allow_origins=["*"]` (a wildcard
+origin is not valid for credentialed requests).
 
-**In production** the same rule has to exist in whatever serves the app. Put the
-built `dist/` folder and the API behind one origin (for example nginx or a
-FastAPI `StaticFiles` mount) and add the equivalent header rewrite. Pointing
-`VITE_API_BASE_URL` at a different origin will not work while the backend uses
-`SameSite=Lax` cookies and `allow_origins=["*"]` (a wildcard origin is not valid
-for credentialed requests) — fix the backend's CORS/`SameSite` settings rather
-than working around them in the browser.
+### Running inside the desktop app
+
+The packaged Windows build serves this `dist/` folder from FastAPI itself, so the
+UI, the API and the cookies all share one origin automatically — no extra
+configuration. `GET /health` reports `desktop: true` there, which is what makes
+the **Application → Quit Closet AI** button in Settings appear. See
+`packaging/README.md`.
 
 Set `VITE_API_BASE_URL` only if the API lives at a path prefix or a different
 same-site origin. It must never contain secrets.
@@ -127,6 +134,9 @@ src/
 | PATCH  | `/clothes/{clothe_id}`   | Update (multipart)             |
 | DELETE | `/clothes/{clothe_id}`   | Delete                         |
 | GET    | `/clothes/ai-suggestion` | AI outfit for an `occasion`    |
+| GET    | `/health`                | Readiness probe + app status   |
+| POST   | `/app/shutdown`          | Quit the desktop app (only when
+|        |                          | started by the desktop launcher) |
 
 ## Security notes
 

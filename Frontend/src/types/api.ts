@@ -73,6 +73,18 @@ export interface MessageResponse {
 }
 
 /**
+ * GET /health — readiness probe. The desktop launcher polls it to know when the
+ * backend is up; the UI uses `desktop` to tell whether a desktop launcher is
+ * running Closet AI (the only case where it can quit itself).
+ */
+export interface AppStatus {
+  status: string;
+  app: string;
+  version: string;
+  desktop: boolean;
+}
+
+/**
  * The multipart fields accepted by POST /clothes/ and PATCH /clothes/{id}.
  * `image` is a real file, so these payloads are always sent as FormData.
  */

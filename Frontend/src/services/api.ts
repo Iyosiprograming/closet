@@ -1,6 +1,7 @@
 import type {
   AddApiKey,
   AddLocation,
+  AppStatus,
   Clothe,
   ClotheFormValues,
   LoginUser,
@@ -202,6 +203,29 @@ function jsonRequest(body: unknown): RequestInit {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   };
+}
+
+/* -------------------------------------------------------------- application */
+
+/**
+ * GET /health — how the app is running. Unauthenticated, and safe to call
+ * before there is a session.
+ */
+export function getAppStatus(): Promise<AppStatus> {
+  return request<AppStatus>("/health", { auth: false });
+}
+
+/**
+ * POST /app/shutdown — asks the packaged desktop app to close.
+ *
+ * Only the Windows build exposes this route, and only the launcher can act on
+ * it; the browser itself never gets to start or stop the server.
+ */
+export function quitApp(): Promise<MessageResponse> {
+  return request<MessageResponse>("/app/shutdown", {
+    method: "POST",
+    auth: false,
+  });
 }
 
 /* ------------------------------------------------------------------ users */

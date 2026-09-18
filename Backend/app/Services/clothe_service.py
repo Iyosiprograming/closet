@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.Core.logger import logger
+from app.Core.paths import images_dir
 from app.Models.clothe_model import (
     Clothe,
     ClotheType,
@@ -22,7 +23,11 @@ from app.Helper.gemin_api import generate_response
 from app.Helper.weather_api import get_weather
 
 
-IMAGE_DIR = Path("images")
+# The writable image directory for the current run mode (see
+# app/Core/paths.py): `Backend/images` from source,
+# `%LOCALAPPDATA%\ClosetAI\images` in the packaged app. It is the same
+# directory the API serves at `/images/...`.
+IMAGE_DIR = images_dir()
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 

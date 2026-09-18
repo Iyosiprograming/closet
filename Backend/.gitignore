@@ -1,7 +1,9 @@
 .env
 app.db
 __pycache__/
-__init__.py
 closet.db
 .pytest_cache
 images
+logs
+.venv/
+__init__.py

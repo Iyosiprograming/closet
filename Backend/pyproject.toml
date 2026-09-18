@@ -17,3 +17,11 @@ dependencies = [
     "sqlalchemy>=2.0.50",
     "uvicorn>=0.49.0",
 ]
+
+# Build-only tools. PyInstaller packages the backend and the production
+# frontend into ClosetAI.exe (see ../packaging and ../build_windows.ps1).
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.11",
+]
+

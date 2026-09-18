@@ -1,1 +1,9 @@
 .freebuff
+
+# Python packaging output (PyInstaller)
+packaging/build/
+packaging/dist/
+*.spec.bak
+
+# Release artifacts produced by build_windows.ps1
+release/
