@@ -321,15 +321,6 @@ Done:
 - [x] Weather-aware suggestions (optional OpenWeather key)
 - [x] Single-file Windows application for non-technical users
 
-Next:
-
-- [ ] Code signing, so Windows stops warning on first launch
-- [ ] An installer with a Start-menu entry and a proper uninstaller
-- [ ] A test suite for the API and the frontend
-- [ ] History of past outfit suggestions
-- [ ] PostgreSQL support for hosted deployments
-- [ ] Automatic update check against GitHub releases
-
 ---
 
 ## How it is put together
