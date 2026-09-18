@@ -20,7 +20,6 @@ export default function Settings({ onLogout }: SettingsProps) {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [savingLocation, setSavingLocation] = useState(false);
 
-  // API keys stay in these two state values just long enough to submit them.
   const [geminiKey, setGeminiKey] = useState("");
   const [openWeatherKey, setOpenWeatherKey] = useState("");
   const [keysError, setKeysError] = useState<string | null>(null);
@@ -33,17 +32,12 @@ export default function Settings({ onLogout }: SettingsProps) {
 
     const trimmed = location.trim();
 
-    if (!trimmed) {
-      setLocationError("Please enter a location.");
-      return;
-    }
-
     setLocationError(null);
     setSavingLocation(true);
 
     try {
       await saveLocation({ location: trimmed });
-      showToast("Location saved");
+      showToast(trimmed ? "Location saved" : "Location cleared");
     } catch (caught) {
       setLocationError(
         caught instanceof ApiError
@@ -80,7 +74,6 @@ export default function Settings({ onLogout }: SettingsProps) {
           : {}),
       });
 
-      // Nothing is kept around after the request succeeds.
       setGeminiKey("");
       setOpenWeatherKey("");
       showToast("API keys saved");
@@ -97,25 +90,39 @@ export default function Settings({ onLogout }: SettingsProps) {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
-      <h1 className="text-2xl font-semibold text-ink sm:text-3xl">Settings</h1>
+      <h1 className="text-2xl font-semibold text-ink sm:text-3xl">
+        Settings
+      </h1>
 
       <section className={`mt-8 ${sectionClass}`}>
-        <h2 className="text-lg font-semibold text-ink">Location</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          Closet AI uses your location for weather-aware outfit suggestions.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">Location</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Add your city for weather-aware outfit suggestions. This is
+              optional.
+            </p>
+          </div>
+
+          <span className="shrink-0 text-xs text-muted">Optional</span>
+        </div>
 
         <form onSubmit={handleSaveLocation} className="mt-5">
           <label htmlFor="location" className={labelClass}>
-            Location
+            City
           </label>
+
           <input
             id="location"
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            placeholder="Addis Ababa, Ethiopia"
+            placeholder="Addis Ababa"
             className={inputClass}
           />
+
+          <p className="mt-2 text-xs text-muted">
+            Enter your city only, for example: Addis Ababa.
+          </p>
 
           {locationError && (
             <p role="alert" className="mt-3 text-sm text-red-300">
@@ -135,6 +142,7 @@ export default function Settings({ onLogout }: SettingsProps) {
 
       <section className={`mt-6 ${sectionClass}`}>
         <h2 className="text-lg font-semibold text-ink">API configuration</h2>
+
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Stored on the backend only. Keys are never saved in your browser and
           are cleared from this form after you submit them.
@@ -146,8 +154,10 @@ export default function Settings({ onLogout }: SettingsProps) {
               <label htmlFor="gemini-api-key" className={`${labelClass} mb-0`}>
                 Gemini API key
               </label>
+
               <span className="text-xs text-muted">Required</span>
             </div>
+
             <input
               id="gemini-api-key"
               type="password"
@@ -156,6 +166,15 @@ export default function Settings({ onLogout }: SettingsProps) {
               onChange={(event) => setGeminiKey(event.target.value)}
               className={`mt-2 ${inputClass}`}
             />
+
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs text-accent underline-offset-4 hover:underline"
+            >
+              Get a Gemini API key →
+            </a>
           </div>
 
           <div>
@@ -166,8 +185,10 @@ export default function Settings({ onLogout }: SettingsProps) {
               >
                 OpenWeather API key
               </label>
+
               <span className="text-xs text-muted">Optional</span>
             </div>
+
             <input
               id="openweather-api-key"
               type="password"
@@ -176,6 +197,15 @@ export default function Settings({ onLogout }: SettingsProps) {
               onChange={(event) => setOpenWeatherKey(event.target.value)}
               className={`mt-2 ${inputClass}`}
             />
+
+            <a
+              href="https://home.openweathermap.org/api_keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs text-accent underline-offset-4 hover:underline"
+            >
+              Get an OpenWeather API key →
+            </a>
           </div>
 
           {keysError && (
@@ -196,6 +226,7 @@ export default function Settings({ onLogout }: SettingsProps) {
 
       <section className={`mt-6 ${sectionClass}`}>
         <h2 className="text-lg font-semibold text-ink">Account</h2>
+
         <p className="mt-2 text-sm leading-relaxed text-muted">
           You are signed in on this device. Logging out clears your session
           cookies.
@@ -212,3 +243,4 @@ export default function Settings({ onLogout }: SettingsProps) {
     </div>
   );
 }
+
