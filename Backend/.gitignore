@@ -4,3 +4,4 @@ __pycache__/
 __init__.py
 closet.db
 .pytest_cache
+images
